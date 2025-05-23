@@ -8,6 +8,7 @@ import tech.powerjob.worker.core.processor.ProcessResult;
 import tech.powerjob.worker.core.processor.TaskResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 @Slf4j
@@ -17,10 +18,14 @@ public class ReadFileJob implements MapReduceProcessor {
 
     @Override
     public ProcessResult process(TaskContext context) throws Exception {
-        // 从类路径获取资源 input.txt
         ClassLoader classLoader = getClass().getClassLoader();
-        Path path = Paths.get(Objects.requireNonNull(classLoader.getResource("tech/powerjob/samples/FileRead/input.txt")).toURI());
+        URL resource = classLoader.getResource("input.txt");  // 直接用文件名，不带包路径
 
+        if (resource == null) {
+            throw new RuntimeException("资源文件 input.txt 未找到！");
+        }
+
+        Path path = Paths.get(resource.toURI());
         List<String> lines = Files.readAllLines(path);
         return new ProcessResult(true, MAPPER.writeValueAsString(lines));
     }
