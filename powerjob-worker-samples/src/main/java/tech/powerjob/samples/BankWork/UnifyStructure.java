@@ -25,27 +25,35 @@ public class UnifyStructure implements BasicProcessor {
         OmsLogger omsLogger = context.getOmsLogger();
         omsLogger.info("统一结构化任务开始，任务上下文: {}", context);
 
-        // 1. 从 WorkflowContext 获取 structuredData（应为 JSON 字符串）
-        String structureddata = context.getWorkflowContext().fetchWorkflowContext().get("structuredData");
-        if (structureddata == null) {
-            omsLogger.error("未找到名为 structuredData 的工作流上下文数据！");
-            return new ProcessResult(false, "structuredData 缺失");
-        }
+        // 1. 从 WorkflowContext 获取 structuredData
+        String convertedList = context.getWorkflowContext().fetchWorkflowContext().get("convertedlist");
+        String structuredList = context.getWorkflowContext().fetchWorkflowContext().get("structured_list");
 
         // 2. 解析 JSON 为 List<Map<String, Object>>
         ObjectMapper mapper = new ObjectMapper();
-        List<Map<String, Object>> rawData;
+        List<Map<String, Object>> rawData1 = new ArrayList<>();
+        List<Map<String, Object>> rawData2 = new ArrayList<>();
         try {
-            rawData = mapper.readValue(structureddata, new TypeReference<List<Map<String, Object>>>() {
+            rawData1 = mapper.readValue(convertedList, new TypeReference<List<Map<String, Object>>>() {
+            });
+            rawData2 = mapper.readValue(structuredList, new TypeReference<List<Map<String, Object>>>() {
             });
         } catch (Exception e) {
             omsLogger.error("JSON 解析失败: {}", e.getMessage());
             return new ProcessResult(false, "JSON 格式错误");
         }
 
+        rawData1.addAll(rawData2);
+        List<Map<String, Object>> structureddata = rawData1;
+
+        if (structureddata == null) {
+            omsLogger.error("未找到名为 structuredData 的工作流上下文数据！");
+            return new ProcessResult(false, "structuredData 缺失");
+        }
+
         // 3. 字段统一化与排序
         List<Map<String, Object>> unifiedList = new ArrayList<>();
-        for (Map<String, Object> record : rawData) {
+        for (Map<String, Object> record : structureddata) {
             Map<String, Object> unifiedRecord = new LinkedHashMap<>();
 
             for (String field : FIELD_ORDER) {
@@ -80,7 +88,8 @@ public class UnifyStructure implements BasicProcessor {
         String unifiedjsonList = JSON.toJSONString(unifiedList, true);
         // 如果你还需要把数据传给下个节点
         context.getWorkflowContext().appendData2WfContext("unifiedData", unifiedjsonList);
-
+        context.getWorkflowContext().appendData2WfContext("convertedlist", "[]");  // 设为空数组JSON
+        context.getWorkflowContext().appendData2WfContext("structured_list", "[]"); // 设为空数组JSON
         return new ProcessResult(true, "统一结构化成功，已处理: " + unifiedjsonList);
     }
 
@@ -94,15 +103,14 @@ public class UnifyStructure implements BasicProcessor {
         }
     }
 
-    private Integer parseAmount(Object value) {
-        if (value == null) return 0;
+    private BigDecimal parseAmount(Object value) {
+        if (value == null) return BigDecimal.ZERO;
         try {
-            // 移除"元"等中文字符，只保留数字
-            String amountStr = value.toString().replaceAll("[^0-9.-]", "");
-            return Integer.parseInt(amountStr);
+            String amountStr = value.toString().replaceAll("[^0-9.\\-]", ""); // 保留负号和小数点
+            if (amountStr.isEmpty()) return BigDecimal.ZERO;
+            return new BigDecimal(amountStr);
         } catch (Exception e) {
-//            log.warn("金额解析失败: {}", value);
-            return 0;
+            return BigDecimal.ZERO;
         }
     }
 }
