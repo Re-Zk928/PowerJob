@@ -1,0 +1,11 @@
+{
+  "机构": "org",
+  "开户行": "org",
+  "银行机构": "org",
+  "科目": "subject",
+  "币种": "currency",
+  "交易码": "transCode",
+  "交易日期": "transDate",
+  "金额": "amount",
+  "来源系统": "sourceSystem"
+}
