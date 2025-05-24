@@ -1,4 +1,5 @@
 package tech.powerjob.samples.BankWork;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import tech.powerjob.worker.core.processor.sdk.BasicProcessor;
@@ -17,12 +18,37 @@ import java.util.*;
 public class check_is_structured implements BasicProcessor {
     @Override
     public ProcessResult process(TaskContext context) throws Exception {
-
-        // PowerJob 在线日志功能，使用该 Logger 打印的日志可以直接在 PowerJob 控制台查看
         OmsLogger omsLogger = context.getOmsLogger();
-        context.getOmsLogger().info("FirstTask 执行");
-        context.getWorkflowContext().appendData2WfContext("dataFromFirst", "这是来自第一个任务的数据");
-        return new ProcessResult(true, "First 任务执行完成");
+        ObjectMapper objectMapper = new ObjectMapper();
 
+        // 从上下文中获取 other_bank_list 字符串
+        String jsonStr = (String) context.getWorkflowContext().fetchWorkflowContext().get("other_bank_list");
+
+        List<Object> otherBankList = objectMapper.readValue(jsonStr, new TypeReference<List<Object>>() {
+        });
+
+        List<Map<String, Object>> structuredList = new ArrayList<>();
+        List<String> unstructuredList = new ArrayList<>();
+
+        for (Object item : otherBankList) {
+            if (item instanceof Map) {
+                Map<String, Object> map = (Map<String, Object>) item;
+                if (map.containsKey("raw")) {
+                    unstructuredList.add((String) map.get("raw"));
+                } else {
+                    structuredList.add(map);
+                }
+            } else if (item instanceof String) {
+                unstructuredList.add((String) item);
+            }
+        }
+
+        // 保存结果
+        context.getWorkflowContext().appendData2WfContext("structured_list", structuredList);
+        context.getWorkflowContext().appendData2WfContext("unstructured_list", unstructuredList);
+
+        omsLogger.info("结构化记录: " + structuredList.size() + " 条，非结构化记录: " + unstructuredList.size() + " 条");
+
+        return new ProcessResult(true, "task_data_split 执行成功");
     }
 }

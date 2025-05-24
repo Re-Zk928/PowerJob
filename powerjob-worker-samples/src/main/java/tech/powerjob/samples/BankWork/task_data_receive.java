@@ -33,11 +33,18 @@ public class task_data_receive implements BasicProcessor {
         // 3. 读取TXT文件
         List<String> txtData = readTxt("data/sample_data.txt");
 
-        // 4. 把数据放入工作流上下文
-        context.getWorkflowContext().appendData2WfContext("excelData", excelData);
-        context.getWorkflowContext().appendData2WfContext("jsonData", jsonData);
-        context.getWorkflowContext().appendData2WfContext("txtData", txtData);
+//        // 4. 把数据放入工作流上下文
+//        context.getWorkflowContext().appendData2WfContext("excelData", excelData);
+//        context.getWorkflowContext().appendData2WfContext("jsonData", jsonData);
+//        context.getWorkflowContext().appendData2WfContext("txtData", txtData);
+        List<Object> allData = new ArrayList<>();
+        allData.addAll(excelData);
+        allData.addAll(jsonData);
+        allData.addAll(txtData);
 
+        // 3. 转换为 JSON 字符串并存入工作流上下文
+        String json = tech.powerjob.common.serialize.JsonUtils.toJSONString(allData);
+        context.getWorkflowContext().appendData2WfContext("bank_data", json);
         context.getOmsLogger().info("Excel数据行数：" + excelData.size());
         context.getOmsLogger().info("JSON数据条数：" + jsonData.size());
         context.getOmsLogger().info("TXT数据行数：" + txtData.size());
