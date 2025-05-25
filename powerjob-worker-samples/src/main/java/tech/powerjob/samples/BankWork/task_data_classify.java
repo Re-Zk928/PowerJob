@@ -62,13 +62,9 @@ public class task_data_classify implements BasicProcessor {
                         String line = node.asText();
                         Map<String, Object> map = new HashMap<>();
                         map.put("raw", line);
-                        if (line.contains("银行A")) {
-                            bankAList.add(map);
-                            isBankA = "1";
-                        } else {
-                            otherBankList.add(map);
-                            isOtherBank = "1";
-                        }
+                        otherBankList.add(map);
+                        isOtherBank = "1";
+
                     }
                 }
             } else {
