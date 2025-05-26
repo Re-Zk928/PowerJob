@@ -26,6 +26,8 @@ public class check_is_structured implements BasicProcessor {
 
         List<Object> otherBankList = objectMapper.readValue(jsonStr, new TypeReference<List<Object>>() {
         });
+        String isStruct = "";
+        String unStruct = "";
 
         List<Map<String, Object>> structuredList = new ArrayList<>();
         List<String> unstructuredList = new ArrayList<>();
@@ -35,18 +37,22 @@ public class check_is_structured implements BasicProcessor {
                 Map<String, Object> map = (Map<String, Object>) item;
                 if (map.containsKey("raw")) {
                     unstructuredList.add((String) map.get("raw"));
+                    unStruct = "1";
                 } else {
                     structuredList.add(map);
+                    isStruct = "1";
                 }
             } else if (item instanceof String) {
                 unstructuredList.add((String) item);
+                unStruct = "1";
             }
         }
 
         // 保存结果
         context.getWorkflowContext().appendData2WfContext("structured_list", structuredList);
         context.getWorkflowContext().appendData2WfContext("unstructured_list", unstructuredList);
-
+        context.getWorkflowContext().appendData2WfContext("isStruct", isStruct);
+        context.getWorkflowContext().appendData2WfContext("unStruct", unStruct);
         omsLogger.info("结构化记录: " + structuredList.size() + " 条，非结构化记录: " + unstructuredList.size() + " 条");
 
         return new ProcessResult(true, "task_data_split 执行成功");

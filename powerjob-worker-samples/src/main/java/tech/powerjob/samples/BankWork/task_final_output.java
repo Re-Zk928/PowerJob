@@ -142,8 +142,12 @@ public class task_final_output implements BasicProcessor {
      */
     private String getOutputFilePath() throws IOException {
         // 目标路径：C:\Users\lay\Documents\GitHub\PowerJob\powerjob-worker-samples\src\main\resources\data
-        String dataDir = "C:\\Users\\lay\\Documents\\GitHub\\PowerJob\\powerjob-worker-samples\\src\\main\\resources\\data\\";
+//        String dataDir = "C:\\Users\\lay\\Documents\\GitHub\\PowerJob\\powerjob-worker-samples\\src\\main\\resources\\data\\";
+        // 获取 resources 根路径
+        String resourceRoot = getClass().getClassLoader().getResource("").getPath();
 
+        // 拼接 data 目录路径
+        String dataDir = resourceRoot + "data/";
         // 确保目录存在
         File dir = new File(dataDir);
         if (!dir.exists()) {
